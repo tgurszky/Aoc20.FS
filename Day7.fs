@@ -44,10 +44,10 @@ let gatherChildren children currentColor containedColors =
     containedColors
     |> List.fold processContained children
 
-let parseRule gatherer parents rule =
+let parseRule gatherer map rule =
     match (run pRule rule) with
-    | Success((color, Some colors), _, _) -> gatherer parents color colors
-    | _ -> parents
+    | Success((color, Some colors), _, _) -> gatherer map color colors
+    | _ -> map
 
 let parseRules gatherer (input: string) =
     input.Split '\n'
@@ -62,6 +62,15 @@ let rec getParents parentDict parents color =
 let parentCount color parents =
     getParents parents [] color
     |> (List.distinct >> List.length)
+
+let childrenCount color children =
+    let rec countChildren count key map =
+        let folder count (num, color) =
+            count + num + (num * countChildren 0 color children)
+        match Map.tryFind key map with
+        | Some children -> List.fold folder count children
+        | None -> 0
+    countChildren 0 color children
 
 let input = "vibrant bronze bags contain 3 dim olive bags.
 shiny teal bags contain 1 posh green bag, 5 pale indigo bags, 1 mirrored purple bag.
