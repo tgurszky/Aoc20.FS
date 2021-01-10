@@ -24,27 +24,35 @@ let pRule = (pColor .>> pstring "bags contain ") .>>. (pEmpty <|> pContains)
 let trim (s: string) =
     s.Trim ()
 
-let gatherParents parents currentColor containedColors =
-    let append newParent existingParents = 
-        match existingParents with
-        | Some ps -> Some (newParent :: ps)
-        | None -> Some [newParent]
-    let addParent parents newParent color = Map.change color (append newParent) parents
+let append newElement existingElements = 
+    match existingElements with
+    | Some es -> Some (newElement :: es)
+    | None -> Some [newElement]
+
+let addElement elements newElement key = Map.change key (append newElement) elements
+
+let gatherParents parents currentColor containedColors =    
     let processContained parents containedColor =
-        addParent parents currentColor containedColor
+        addElement parents currentColor containedColor
     containedColors
     |> List.map snd
     |> List.fold processContained parents
 
-let parseRule level parents rule =
+let gatherChildren children currentColor containedColors =
+    let processContained children containedColor =
+        addElement children containedColor currentColor
+    containedColors
+    |> List.fold processContained children
+
+let parseRule gatherer parents rule =
     match (run pRule rule) with
-    | Success((color, Some colors), _, _) -> gatherParents parents color colors
+    | Success((color, Some colors), _, _) -> gatherer parents color colors
     | _ -> parents
 
-let parseRules level (input: string) =
+let parseRules gatherer (input: string) =
     input.Split '\n'
     |> Array.map trim
-    |> Array.fold (parseRule level) Map.empty
+    |> Array.fold (parseRule gatherer) Map.empty
 
 let rec getParents parentDict parents color =
     match Map.tryFind color parentDict with
