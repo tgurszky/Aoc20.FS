@@ -2,7 +2,7 @@
 
 [<EntryPoint>]
 let main argv =  
-    Day7.parseRules Day7.gatherChildren Day7.input
-    |> Day7.childrenCount "shinygold"
-    |> printfn "The solution is %i"
+    Day8.parseInput Day8.input
+    |> Day8.solve
+    |> printfn "The solution is %A"
     0 // return an integer exit code
