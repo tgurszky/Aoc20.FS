@@ -31,6 +31,10 @@ let state = {
     History = Map.empty
 }
 
+type Finish = 
+    | Fixed of int
+    | NotFixed
+
 let pOpValue = pchar ' ' >>. pint32
 let pNop = stringReturn "nop" NoOp
 let pNopLine = (pNop .>> pOpValue) .>> spaces
@@ -54,6 +58,25 @@ let rec solve state =
               | Accumulator a -> solve { state with Counter = state.Counter + a; Pointer = state.Pointer + 1; History = updateHistory state }
               | Jump j -> solve { state with Pointer = state.Pointer + j; History = updateHistory state }
               | NoOp -> solve { state with Pointer = state.Pointer + 1; History = updateHistory state }
+
+let changeNext lastChanged state =
+    List.fin
+
+let solve2 state =
+    let rec iterate state =
+        if state.Pointer > List.length state.Operations then Fixed state.Counter
+        else match Map.tryFind state.Pointer state.History with
+             | Some _ -> NotFixed
+             | None -> match List.item state.Pointer state.Operations with
+                       | Accumulator a -> iterate { state with Counter = state.Counter + a; Pointer = state.Pointer + 1; History = updateHistory state }
+                       | Jump j -> iterate { state with Pointer = state.Pointer + j; History = updateHistory state }
+                       | NoOp -> iterate { state with Pointer = state.Pointer + 1; History = updateHistory state }
+    let rec fix lastChanged state =
+        match iterate state with
+        | NotFixed -> 0
+        | Fixed result -> result
+
+    fix -1 state
 
 let input = "acc +17
 jmp +1
